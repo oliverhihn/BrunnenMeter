@@ -1,4 +1,4 @@
-// BrunnenMeter 2.0
+// BrunnenMeter 2.1
 
 /*
   Pinout:
@@ -70,7 +70,7 @@ void setup() {
   Serial.begin(115200);
 
   scale.begin(DOUT, CLK);
-  scale.set_offset(-1868434);
+  scale.set_offset(-2159572);
 
   // WLAN and MQTT Setup
   setup_wifi();
@@ -161,19 +161,19 @@ void reconnect() {
 float meassureWaterlevel() {
   scale.power_up();        // wake up the ADC
 
-  Serial.print("sensor reading:\t");
-  Serial.println(scale.get_units());
-
   digitalWrite(RELAY_PIN, LOW);
 
-  delay(1000);
+  delay(1750);
 
   digitalWrite(RELAY_PIN, HIGH);
 
-  delay(200);  // wait for preassure to normalise before meassuring
+  delay(2000);  // wait for preassure to normalise before meassuring
 
   //map the raw data to a human readable:
-  cmValue = map(scale.get_units(), 0, 1930, 0, 90);          // meassured 90cm waterdepth at a sensor reading of 1930
+  cmValue = map(scale.get_units(), 0, 4594413, 0, 92);          // meassured 90cm waterdepth at a sensor reading of 1930
+
+  Serial.print("Wasserstand:\t");
+  Serial.println(String(cmValue) + String(" cm"));
 
   if (cmValue <= 47) {                      // calculate the volume in litre:
     waterValue  = cmValue * 10 * 0.503;     // footprint of zylindre * hight (cmValue)
@@ -185,7 +185,7 @@ float meassureWaterlevel() {
     waterValue += cmValue * 10 * 0.754;     // after that it is 0.754m² (calculate the rest with other footprint)
   }
 
-  Serial.print("Wasserstand:\t");
+  Serial.print("Wassermänge:\t");
   Serial.println(String(waterValue) + String(" Liter"));
 
   scale.power_down();                       // put the ADC in sleep mode
@@ -211,13 +211,8 @@ void loop() {
 
   ArduinoOTA.handle();
 
-  if (millis() - myTime > 1800000) { // meassure every half hour
+  if (millis() - myTime > 600000) { // meassure every half hour
     myTime = millis();
     client.publish(brunnen_send_topic, String(meassureWaterlevel()).c_str(), true);
-  }
-
-  if (millis() - myTime > 2000) { // meassure every half hour
-    myTime = millis();
-    Serial.println(meassureWaterlevel());
   }
 }
